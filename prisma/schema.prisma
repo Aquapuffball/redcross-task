@@ -1,0 +1,174 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Canonical kommune (matches SSB / SSB-style codes and names from other sources).
+model Municipality {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  county    String?
+  region    String?
+
+  branches               OrganizationBranch[]
+  immigrationStats       MunicipalityImmigrationStat[]
+  leisureCenterStats     MunicipalityLeisureCenterStat[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+}
+
+model OrganizationBranch {
+  id                 String   @id @default(cuid())
+  branchId           String   @unique
+  branchNumber       String?
+  organizationNumber String?
+  branchType         String
+  branchName         String
+
+  // branchStatus
+  isActive        Boolean
+  creationDate    DateTime
+  isTerminated    Boolean
+  terminationDate DateTime?
+
+  // branchParent
+  parentBranchId     String?
+  parentBranchNumber String?
+  parentBranchName   String?
+  parentBranchType   String?
+  parent             OrganizationBranch?  @relation("BranchParent", fields: [parentBranchId], references: [branchId])
+  children           OrganizationBranch[] @relation("BranchParent")
+
+  // branchDetails
+  description       String?
+  organizationLevel String?
+
+  // branchLocation (raw strings from API; link via municipalityId when resolvable)
+  locationMunicipality String?
+  county               String?
+  region               String?
+  postalAddressLine1   String?
+  postalCode           String?
+  postOffice           String?
+  streetAddressLine1   String?
+  streetPostalCode     String?
+  streetPostOffice     String?
+
+  municipalityId String?
+  municipality   Municipality? @relation(fields: [municipalityId], references: [id], onDelete: SetNull)
+
+  // communicationChannels
+  phone String?
+  email String?
+  web   String?
+
+  contacts   BranchContact[]
+  activities BranchActivity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([municipalityId])
+}
+
+model BranchContact {
+  id            String @id @default(cuid())
+  branchId      String
+  role          String?
+  firstName     String?
+  lastName      String?
+  email         String?
+  isVolunteer   Boolean?
+  isMember      Boolean?
+  memberNumber  String?
+  branch        OrganizationBranch @relation(fields: [branchId], references: [branchId], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([branchId])
+}
+
+model BranchActivity {
+  id                 String @id @default(cuid())
+  branchId           String
+  globalActivityName String?
+  localActivityName  String?
+  branch             OrganizationBranch @relation(fields: [branchId], references: [branchId], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([branchId])
+}
+
+enum Gender {
+  ALL
+  WOMEN
+  MEN
+}
+
+enum ImmigrationReason {
+  ALL
+  LABOR
+  FAMILY
+  REFUGEES_AND_FAMILY
+  UNDISCLOSED
+  EDUCATION_OR_OTHER
+}
+
+enum ValueUnit {
+  PERSONS
+  PERCENT
+}
+
+model MunicipalityImmigrationStat {
+  id                String            @id @default(cuid())
+  municipalityId    String
+  municipality      Municipality      @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  gender            Gender
+  year              Int
+  immigrationReason ImmigrationReason
+  unit              ValueUnit
+  value             Decimal
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([municipalityId, year, gender, immigrationReason, unit])
+  @@index([municipalityId, year])
+  @@index([year, immigrationReason, unit])
+}
+
+model MunicipalityLeisureCenterStat {
+  id              String @id @default(cuid())
+  tableId         String @default("12063")
+  municipalityId  String
+  municipality    Municipality @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  year            Int
+  contentsCode    String
+  contentsLabel   String?
+  value           Decimal?
+  status          String?
+  sourceUpdatedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([municipalityId, year, contentsCode])
+  @@index([year, contentsCode])
+  @@index([municipalityId, year])
+}
