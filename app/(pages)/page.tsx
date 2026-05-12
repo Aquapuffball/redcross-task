@@ -12,6 +12,7 @@ import {
   Select,
   Spinner,
 } from "rk-designsystem";
+import { Label } from "@digdir/designsystemet-react";
 import {
   ComparisonDetailError,
   ComparisonDetailLoading,
@@ -199,18 +200,13 @@ export default function Home() {
     }
 
     return (
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <Card data-color="neutral">
           <CardBlock>
-            <div className="flex flex-row space-between gap-6 max-w-lg p-4">
-              <div className="w-full">
+            <div className="flex flex-wrap gap-6 max-w-lg">
+              <div className="flex-1 min-w-0 basis-40">
                 <Field>
-                  <label
-                    htmlFor="municipality-select"
-                    className="mb-2 block text-sm font-medium text-neutral-900"
-                  >
-                    Kommune
-                  </label>
+                  <Label htmlFor="municipality-select">Kommune</Label>
                   <Select
                     id="municipality-select"
                     name="municipalityId"
@@ -230,14 +226,9 @@ export default function Home() {
                   </Select>
                 </Field>
               </div>
-              <div className="w-full">
+              <div className="flex-1 min-w-0 basis-32">
                 <Field>
-                  <label
-                    htmlFor="year-select"
-                    className="mb-2 block text-sm font-medium text-neutral-900"
-                  >
-                    År
-                  </label>
+                  <Label htmlFor="year-select">År</Label>
                   <Select
                     id="year-select"
                     name="year"
@@ -261,7 +252,7 @@ export default function Home() {
         </Card>
 
         {selectedMunicipalityId ? (
-          <div className="space-y-8">
+          <div className="flex flex-col gap-8">
             {detail.status === "loading" ? <ComparisonDetailLoading /> : null}
             {detail.status === "error" ? (
               <ComparisonDetailError message={detail.message} />
@@ -278,7 +269,7 @@ export default function Home() {
                   />
                 </div>
                 <div className="order-1 md:order-2 w-full">
-                  <div className="space-y-4 my-4 text-neutral-900">
+                  <div className="flex flex-col gap-4 my-4">
                     <Paragraph data-size="md">
                       Viser data for{" "}
                       <strong>
@@ -311,21 +302,19 @@ export default function Home() {
   })();
 
   return (
-    <div className="flex min-h-full flex-col">
-      <main
-        id="main-content"
-        className="mx-auto w-full max-w-6xl flex-1 space-y-6 p-6"
-      >
-        <Heading level={1} data-size="md">
-          Kommunesammenligning
-        </Heading>
-        <Paragraph data-size="--ds-size-14">
-          Velg kommune og år ({COMPARISON_YEAR_RANGE_LABEL}) for å se
-          innvandringsstatistikk og fritidsklubb-data (SSB 12063).
-        </Paragraph>
+    <main
+      id="main-content"
+      className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 p-6"
+    >
+      <Heading level={1} data-size="md">
+        Kommunesammenligning
+      </Heading>
+      <Paragraph data-size="md">
+        Velg kommune og år ({COMPARISON_YEAR_RANGE_LABEL}) for å se
+        innvandringsstatistikk og fritidsklubb-data (SSB 12063).
+      </Paragraph>
 
-        {mainBody}
-      </main>
-    </div>
+      {mainBody}
+    </main>
   );
 }

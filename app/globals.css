@@ -1,8 +1,34 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Bind Tailwind utilities to the Røde Kors design tokens.
+ *
+ * --ds-size-N = N * --ds-size-unit (perfectly linear), so overriding
+ * Tailwind's --spacing makes every p-N, m-N, gap-N, space-y-N, etc.
+ * resolve to a matching --ds-size-N at runtime, including scaling with
+ * the [data-size="sm|md|lg"] context. No more hardcoded magic numbers.
+ *
+ * Colors and radii are exposed under a `ds-*` namespace so utilities like
+ * text-ds-text-subtle / border-ds-border-default / rounded-ds-md map
+ * unambiguously to DS tokens without clobbering Tailwind defaults.
+ */
+@theme {
+  --spacing: var(--ds-size-unit);
+
+  --color-ds-text-default: var(--ds-color-neutral-text-default);
+  --color-ds-text-subtle: var(--ds-color-neutral-text-subtle);
+  --color-ds-bg-default: var(--ds-color-neutral-background-default);
+  --color-ds-bg-subtle: var(--ds-color-neutral-background-subtle);
+  --color-ds-border-default: var(--ds-color-neutral-border-default);
+  --color-ds-border-subtle: var(--ds-color-neutral-border-subtle);
+
+  --radius-ds-sm: var(--ds-border-radius-sm);
+  --radius-ds-md: var(--ds-border-radius-md);
+  --radius-ds-lg: var(--ds-border-radius-lg);
+  --radius-ds-xl: var(--ds-border-radius-xl);
+  --radius-ds-full: var(--ds-border-radius-full);
 }
 
-
+ul{
+  list-style-type: disc;
+}

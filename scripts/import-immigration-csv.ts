@@ -6,7 +6,7 @@ import {
   Prisma,
   ValueUnit,
 } from "../app/generated/prisma/client";
-import { normalizeKommuneCode } from "../lib/municipality-code";
+import { normalizeKommuneCode } from "@/lib/scripts/municipality-code";
 import { createScriptPrisma } from "./create-script-prisma";
 
 const FILE_DEFAULT = "befolkning_innvandringsgrunn_kommuner.csv";
@@ -21,7 +21,8 @@ const REASON_MAP: Record<string, ImmigrationReason> = {
   Alle: ImmigrationReason.ALL,
   Arbeidsinnvandrere: ImmigrationReason.LABOR,
   Familieinnvandrede: ImmigrationReason.FAMILY,
-  "Flyktninger og deres familieinnvandrede": ImmigrationReason.REFUGEES_AND_FAMILY,
+  "Flyktninger og deres familieinnvandrede":
+    ImmigrationReason.REFUGEES_AND_FAMILY,
   Uoppgitt: ImmigrationReason.UNDISCLOSED,
   "Utdanning (inkl. au pair) eller andre grunner":
     ImmigrationReason.EDUCATION_OR_OTHER,
@@ -106,76 +107,84 @@ async function run() {
       years.add(row.year);
     }
 
-    console.log(`Parsed ${parsed.length} rows, ${years.size} years, kommuner=${uniqueKommuner.size}`);
+    console.log(
+      `Parsed ${parsed.length} rows, ${years.size} years, kommuner=${uniqueKommuner.size}`,
+    );
 
-    await prisma.$transaction(async (tx) => {
-      for (const [code, name] of uniqueKommuner) {
-        const existing = await tx.municipality.findUnique({
-          where: { code },
+    await prisma.$transaction(
+      async (tx) => {
+        for (const [code, name] of uniqueKommuner) {
+          const existing = await tx.municipality.findUnique({
+            where: { code },
+          });
+          if (!existing) {
+            await tx.municipality.create({
+              data: {
+                code,
+                name,
+              },
+            });
+          }
+        }
+
+        await tx.municipalityImmigrationStat.deleteMany({
+          where: { year: { in: [...years] } },
         });
-        if (!existing) {
-          await tx.municipality.create({
-            data: {
-              code,
-              name,
-            },
+
+        const idByCode = await resolveMunicipalityIdByCodeMap(tx, codesInRows);
+
+        const prismaRows: Prisma.MunicipalityImmigrationStatCreateManyInput[] =
+          [];
+        let skipped = 0;
+
+        for (const row of parsed) {
+          let code: string;
+          try {
+            code = normalizeKommuneCode(row.codeRaw);
+          } catch {
+            skipped += 1;
+            continue;
+          }
+
+          const gender = GENDER_MAP[row.gender];
+          const reason = REASON_MAP[row.reasonRaw];
+          const unit = UNIT_MAP[row.unitRaw];
+          const municipalityId = idByCode.get(code);
+
+          if (!gender || !reason || !unit || !municipalityId) {
+            skipped += 1;
+            continue;
+          }
+
+          const valueNum = Number.parseFloat(row.amount.replace(",", "."));
+          if (Number.isNaN(valueNum)) {
+            skipped += 1;
+            continue;
+          }
+
+          prismaRows.push({
+            municipalityId,
+            gender,
+            year: row.year,
+            immigrationReason: reason,
+            unit,
+            value: new Prisma.Decimal(String(valueNum)),
           });
         }
-      }
 
-      await tx.municipalityImmigrationStat.deleteMany({
-        where: { year: { in: [...years] } },
-      });
-
-      const idByCode = await resolveMunicipalityIdByCodeMap(tx, codesInRows);
-
-      const prismaRows: Prisma.MunicipalityImmigrationStatCreateManyInput[] = [];
-      let skipped = 0;
-
-      for (const row of parsed) {
-        let code: string;
-        try {
-          code = normalizeKommuneCode(row.codeRaw);
-        } catch {
-          skipped += 1;
-          continue;
+        const chunk = 2500;
+        for (let i = 0; i < prismaRows.length; i += chunk) {
+          await tx.municipalityImmigrationStat.createMany({
+            data: prismaRows.slice(i, i + chunk),
+          });
         }
 
-        const gender = GENDER_MAP[row.gender];
-        const reason = REASON_MAP[row.reasonRaw];
-        const unit = UNIT_MAP[row.unitRaw];
-        const municipalityId = idByCode.get(code);
-
-        if (!gender || !reason || !unit || !municipalityId) {
-          skipped += 1;
-          continue;
-        }
-
-        const valueNum = Number.parseFloat(row.amount.replace(",", "."));
-        if (Number.isNaN(valueNum)) {
-          skipped += 1;
-          continue;
-        }
-
-        prismaRows.push({
-          municipalityId,
-          gender,
-          year: row.year,
-          immigrationReason: reason,
-          unit,
-          value: new Prisma.Decimal(String(valueNum)),
-        });
-      }
-
-      const chunk = 2500;
-      for (let i = 0; i < prismaRows.length; i += chunk) {
-        await tx.municipalityImmigrationStat.createMany({
-          data: prismaRows.slice(i, i + chunk),
-        });
-      }
-
-      console.log(`Inserted immigration stats=${prismaRows.length}, skipped=${skipped}`);
-    }, { timeout: 600_000 });
+        console.log(
+          `Inserted immigration stats=${prismaRows.length}, skipped=${skipped}`,
+        );
+      },
+      { timeout: 600_000 },
+    );
   } finally {
     await prisma.$disconnect();
     await pool.end();

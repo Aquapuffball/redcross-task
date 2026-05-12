@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@/app/generated/prisma/client";
-import { normalizeKommuneCode } from "@/lib/municipality-code";
+import { normalizeKommuneCode } from "@/lib/scripts/municipality-code";
 
 export const API_QUERY_YEAR_MIN = 1990;
 export const API_QUERY_YEAR_MAX = 2100;

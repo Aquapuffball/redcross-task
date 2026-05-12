@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { resolveMunicipalityIdFromParam } from "@/lib/api-municipality-query";
+import { resolveMunicipalityIdFromParam } from "@/lib/scripts/api-municipality-query";
 import { getPrisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -15,15 +15,24 @@ export async function GET(request: Request) {
 
     if (!municipalityRaw) {
       return NextResponse.json(
-        { error: "Query-parameteren `municipality` (kommunens id eller kommunenummer) er påkrevd." },
+        {
+          error:
+            "Query-parameteren `municipality` (kommunens id eller kommunenummer) er påkrevd.",
+        },
         { status: 400 },
       );
     }
 
     const prisma = getPrisma();
-    const resolved = await resolveMunicipalityIdFromParam(prisma, municipalityRaw);
+    const resolved = await resolveMunicipalityIdFromParam(
+      prisma,
+      municipalityRaw,
+    );
     if (!resolved) {
-      return NextResponse.json({ error: "Fant ikke kommune." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Fant ikke kommune." },
+        { status: 404 },
+      );
     }
 
     const muni = await prisma.municipality.findUnique({
@@ -31,7 +40,10 @@ export async function GET(request: Request) {
       select: { id: true, code: true },
     });
     if (!muni) {
-      return NextResponse.json({ error: "Fant ikke kommune." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Fant ikke kommune." },
+        { status: 404 },
+      );
     }
 
     const branches = await prisma.organizationBranch.findMany({

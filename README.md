@@ -1,124 +1,232 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Røde Kors – kapasitetsplanlegging for innvandring
 
-## Getting Started
+Next.js (App Router) prosjekt som kombinerer:
 
-First, run the development server:
+- **Innvandringsdata per kommune og år** (SSB, manuelt nedlastet CSV — APIet krever pålogging)
+- **Fritids-/aktivitetssentre per kommune og år** (SSB tabell 12063, hentet automatisk via PxWeb API)
+- **Lokale Røde Kors-avdelinger, kontakter og aktiviteter** (snapshot fra Røde Kors' organisasjons-API, lagret som JSON-fil)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Frontenden viser et sammendrag per kommune (`/`) der man velger kommune + år og får innvandringstall, lokal Røde Kors-kontakt og hvilke aktiviteter avdelingen kjører.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Tech stack: **Next.js 16** (App Router, Turbopack) · **React 19** · **Prisma 7** (Postgres) · **rk-designsystem** + **Tailwind v4** (bundet til DS-tokens).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Førstegangsoppsett
 
-## Learn More
+### Forutsetninger
 
-To learn more about Next.js, take a look at the following resources:
+- Node.js (v20+ anbefalt)
+- En Postgres-database (lokal eller cloud, f.eks. Prisma Postgres)
+- `git`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-## The idea - capacity planning for immigration
-
-By combining data about activity centers in counties, together with immigration data per year per county, and the available activites Red Cross has per county, this project will present the data giving key information about where it has good capacity to handle immigration or it needs more activities/ spots for planned immigration. Focusing on refugees and family immigrants, as presumeably work and study immigrants might have less needs for humiterrian help.
-
-## Flow:
-
-Create backend to get data from immigration api by county (csv download for now), SSB activity centers by county, json file provided from red cross organistations. Create database model based on these, and new tables to connect them for the case of my task.
-
-Create nextjs api to connect to the database and routes for different outputs.
-
-Create frontend, and connect the data in here.
-
-## Import organizations JSON into Prisma
-
-1. Install dependencies:
+### 1. Klon og installer
 
 ```bash
+git clone <repo-url>
+cd redcross-task
 npm install
 ```
 
-2. Generate Prisma client and apply migrations (required before imports — otherwise tables are missing):
+`postinstall` kjører `prisma generate` automatisk.
+
+### 2. Sett opp `.env`
+
+Opprett en `.env`-fil i prosjektroten med din Postgres connection string:
 
 ```bash
-npm run prisma:generate
-npx prisma migrate dev --name init-organizations
+DATABASE_URL="postgres://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require"
 ```
 
-Database scripts (`import:*`) use Prisma 7’s Postgres driver adapter; connection string is read via `DATABASE_URL` in `.env` (see `scripts/create-script-prisma.ts`).
+> Prosjektet bruker Prisma 7s Postgres driver-adapter, og leser `DATABASE_URL` via `dotenv/config` i `prisma.config.ts` og i hvert importskript.
 
-3. Import organizations from the default file:
+### 3. Opprett databaseskjemaet
+
+Hvis databasen er helt ny (ingen tabeller):
 
 ```bash
+npx prisma migrate dev --name init
+```
+
+Hvis du allerede har en database med skjema men er på en annen maskin:
+
+```bash
+npx prisma migrate deploy
+```
+
+### 4. Last inn alle datasett (én kommando)
+
+Datafilene som ligger i repoet:
+
+- `befolkning_innvandringsgrunn_kommuner.csv` – innvandringsdata (CSV)
+- `api-getOrganizations-output-21apr26.json` – Røde Kors-organisasjon (JSON)
+- SSB 12063 fritidssentere – hentes automatisk
+
+Bootstrap hele datalaget med:
+
+```bash
+npm run data:bootstrap
+```
+
+Dette kjører i rekkefølge:
+
+1. For hvert år i `2022 2023 2024 2025`:
+   - `fetch:ssb:12063 -- <år>` – henter SSB-tabell 12063 for året til `data/ssb/12063-<år>.json`
+   - `import:ssb:12063 -- <år>` – fyller `Municipality` (kommune + fylkesnavn fra SSB Klass 104) og `MunicipalityLeisureCenterStat`
+2. `import:immigration -- ./befolkning_innvandringsgrunn_kommuner.csv` – fyller / oppdaterer `MunicipalityImmigrationStat` (alle år som finnes i CSV-en)
+3. `import:organizations` – fyller `OrganizationBranch`, `BranchContact`, `BranchActivity` fra JSON-snapshotet
+
+Året-spennet 2022–2025 dekker visningsårene (`COMPARISON_YEARS = [2025, 2024, 2023]`) pluss året før hvert visningsår (brukes til å beregne endring i innvandringssammendraget).
+
+Rekkefølgen er viktig: SSB **først** så kommuner får riktig fylkesnavn, deretter innvandring, deretter organisasjoner (slik at avdelinger kan kobles til riktig kommune-id).
+
+Importene er idempotente og trygge å kjøre på nytt.
+
+> Bootstrap-kommandoen bruker en `for`-løkke i `sh` og fungerer på macOS/Linux. Trenger du å kjøre på Windows uten WSL, bruk istedet enkeltkommandoene under.
+
+### 5. (Valgfritt) normaliser kommuner
+
+Hvis du ser duplikate kommunerader eller manglende navn etter import:
+
+```bash
+npm run municipalities:normalize           # dry-run, rapporterer hva som ville endres
+npm run municipalities:normalize -- --apply  # utfør sammenslåing/normalisering
+```
+
+### Kjøre enkeltsteg fra bootstrap manuelt
+
+Hvis du heller vil kjøre stegene individuelt (f.eks. når du oppdaterer ett datasett, eller du er på Windows uten WSL):
+
+```bash
+# SSB fritidssentere – ett år av gangen (gjenta for hvert år du trenger)
+npm run fetch:ssb:12063 -- 2022
+npm run import:ssb:12063 -- 2022
+npm run fetch:ssb:12063 -- 2023
+npm run import:ssb:12063 -- 2023
+npm run fetch:ssb:12063 -- 2024
+npm run import:ssb:12063 -- 2024
+npm run fetch:ssb:12063 -- 2025
+npm run import:ssb:12063 -- 2025
+
+# Innvandrings-CSV (importerer alle år som finnes i fila)
+npm run import:immigration -- ./befolkning_innvandringsgrunn_kommuner.csv
+
+# Røde Kors-organisasjoner
 npm run import:organizations
-```
-
-Optional: import from another file path:
-
-```bash
+# Valgfritt: bytt JSON-fil
 npm run import:organizations -- ./path/to/file.json
 ```
 
-### SSB fritidsdata (PxWeb JSON-stat) + kommuner som sannhetskilde
+---
 
-1. Hent snapshot (samme POST som før):
+## Utvikling
 
-```bash
-npm run fetch:ssb:12063 -- 2025
-```
-
-Lagrer til `data/ssb/12063-2025.json`.
-
-2. Last inn kommuner (+ fylkesnavn via SSB klass 104) og fritidsstatistikker:
+Start utviklingsserveren (Turbopack):
 
 ```bash
-npm run import:ssb:12063 -- 2025
+npm run dev
 ```
 
-Valgfri egen JSON-fil: `npm run import:ssb:12063 -- 2025 ./sti/til/ssb.json`
+Åpne [http://localhost:3000](http://localhost:3000).
 
-Tabell **12063** gir ikke norsk «statsregion»; `Municipality.region` settes ikke her (kan fylles senere). `Municipality.county` settes fra Klass 104 ut fra de to første sifrene i kommunenummeret.
-
-### Immigration CSV (befolkning_innvandringsgrunn_kommuner.csv)
-
-Oppretter manglende `Municipality` med navn fra CSV om kode ikke finnes (overskriver **ikke** eksisterende rader fra SSB). Deretter erstatter alle `MunicipalityImmigrationStat`-rader for årene som finnes i filen og bulk-inserter på nytt (idempotent re-importer):
+Andre nyttige kommandoer:
 
 ```bash
-npm run import:immigration -- ./befolkning_innvandringsgrunn_kommuner.csv
+npm run lint        # eslint
+npm run build       # prod build (next build)
+npm run start       # serve prod build
+npm run prisma:generate
 ```
 
-Anbefalt rekkefølge: først `import:ssb:12063`, deretter `import:immigration`, deretter `import:organizations` (slik avdelinger får koblet `county`/navn fra SSB ved treff på kommunenavn).
+---
 
-## How have i used AI for this task?
+## Test API-ene
 
-- I provided the raw structure of what is (immigration data, organizations data from Red Cross and activity centers), and had it suggest a prisma model stucture of each one of these. These kind of tasks where its to look at data, and extract into something known is something AI is very strong in and saves alot of time.
+Alle endepunktene er Next.js Route Handlers under `app/api/**/route.ts` og kjører dynamisk (`force-dynamic`). De forventer at databasen er populert via stegene over.
 
-## What i would have done if i had more time.
+Eksemplene under bruker kommunenummer `0301` (Oslo) og år `2025`. Du kan også oppgi en kommunes `id` (cuid fra `Municipality.id`) i stedet for kommunenummer i `municipality`-parameteret.
 
-- Connect immigration data directly to the API, here i needed a user to get the spesific data endpoint i wanted, and had problems creating a user. As a tempfix here i downloaded the available data manually, and imported through this file.
+### 1. `GET /api/kommuner` — alle kommuner (id, kode, navn, fylke)
 
-## What is missing:
+```bash
+curl -s "http://localhost:3000/api/kommuner" | head -c 800
+```
 
-- Fix presentation, and maybe add some feature to show how well a municipality is prepared for immigrating new people
-- Fix responsive design
-- Clean up code
-- Deploy to vercel
-- Test on other computer
-- Fix readme
+Åpne i nettleser: <http://localhost:3000/api/kommuner>
+
+### 2. `GET /api/immigrering` — innvandringsstatistikk
+
+Krever minst én av `year` (1990–2100) eller `municipality`.
+
+```bash
+curl -s "http://localhost:3000/api/immigrering?year=2025&municipality=0301"
+```
+
+Åpne i nettleser: <http://localhost:3000/api/immigrering?year=2025&municipality=0301>
+
+### 3. `GET /api/fritidssentere` — SSB 12063 fritidssentere
+
+Samme parametre som `/api/immigrering`.
+
+```bash
+curl -s "http://localhost:3000/api/fritidssentere?year=2025&municipality=0301"
+```
+
+Åpne i nettleser: <http://localhost:3000/api/fritidssentere?year=2025&municipality=0301>
+
+### 4. `GET /api/organisasjon/aktiviteter` — Røde Kors-aktiviteter i kommunen
+
+Krever `municipality`. Returnerer en sortert, unik liste over aktivitetsnavn (lokalt navn foretrekkes, faller tilbake på globalt).
+
+```bash
+curl -s "http://localhost:3000/api/organisasjon/aktiviteter?municipality=0301"
+```
+
+Åpne i nettleser: <http://localhost:3000/api/organisasjon/aktiviteter?municipality=0301>
+
+### 5. `GET /api/organisasjon/lokal-kontakt` — primær avdeling + kontakter
+
+Krever `municipality`. Plukker primær avdeling for kommunen og returnerer kontakter sortert med Leder først, så Nestleder, så øvrige.
+
+```bash
+curl -s "http://localhost:3000/api/organisasjon/lokal-kontakt?municipality=0301"
+```
+
+Åpne i nettleser: <http://localhost:3000/api/organisasjon/lokal-kontakt?municipality=0301>
+
+### 6. `GET /api/tjenester/[id]` — avdelinger oppslag på postnummer (ikke i bruk i UI)
+
+Slår opp `OrganizationBranch` på et 4-sifret norsk postnummer. Foreløpig ikke konsumert av frontenden — dokumentert for fullstendighet.
+
+```bash
+curl -s "http://localhost:3000/api/tjenester/0186"
+```
+
+Åpne i nettleser: <http://localhost:3000/api/tjenester/0186>
+
+---
+
+## Datakilder og kobling til database
+
+| Sannhetskilde | Hvordan lastes | Importeres til | Brukes av endepunkt |
+|---|---|---|---|
+| CSV: `befolkning_innvandringsgrunn_kommuner.csv` (manuelt nedlastet — SSB-APIet krever pålogging) | `npm run import:immigration` | `MunicipalityImmigrationStat` | `/api/immigrering` |
+| JSON: `api-getOrganizations-output-21apr26.json` (snapshot fra Røde Kors org-API) | `npm run import:organizations` | `OrganizationBranch`, `BranchContact`, `BranchActivity` | `/api/organisasjon/aktiviteter`, `/api/organisasjon/lokal-kontakt`, `/api/tjenester/[id]` |
+| SSB Tabell 12063 (hentes automatisk via PxWeb) | `npm run fetch:ssb:12063` + `npm run import:ssb:12063` | `Municipality`, `MunicipalityLeisureCenterStat` | `/api/fritidssentere`, `/api/kommuner` |
+
+---
+
+## Hva er gjort med AI
+
+- Struktur for Prisma-modellene ble foreslått av en AI-assistent basert på rå datastruktur fra hver av de tre kildene; deretter justert manuelt.
+- Designsystem-/komponentintegrasjon mot `rk-designsystem` og Tailwind v4 token-mapping (`@theme { --spacing: var(--ds-size-unit); … }` i `app/globals.css`).
+
+## Hva som ville vært gjort med mer tid
+
+- Direkte API-integrasjon mot SSBs innvandringstabell istedenfor manuell CSV (krever brukerkonto).
+- Liten ytelsesoptimalisering: én server-handler som returnerer både `year` og `year-1` for innvandring slik at frontenden slipper to runde-turer.
+- Fjerne eller knytte `/api/tjenester/[id]` til UI (postnummer-oppslag for "finn din lokale Røde Kors-avdeling").
+
+## Deploy
+
+App Router-prosjektet er klart for Vercel — sett `DATABASE_URL` som miljøvariabel i Vercel-prosjektet. `postinstall` kjører `prisma generate` på byggeserveren.

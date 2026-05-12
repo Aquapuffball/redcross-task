@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { resolveMunicipalityIdFromParam } from "@/lib/api-municipality-query";
+import { resolveMunicipalityIdFromParam } from "@/lib/scripts/api-municipality-query";
 import { getPrisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -21,14 +21,16 @@ function contactSortKey(role: string | null): number {
 function contactHasDisplayData(c: BranchContactRow): boolean {
   return Boolean(
     c.email?.trim() ||
-      c.firstName?.trim() ||
-      c.lastName?.trim() ||
-      c.role?.trim(),
+    c.firstName?.trim() ||
+    c.lastName?.trim() ||
+    c.role?.trim(),
   );
 }
 
 /** «Leder» først, deretter «Nestleder», deretter øvrige (med navn/e-post før tomme felt). */
-function sortContactsForDisplay(contacts: BranchContactRow[]): BranchContactRow[] {
+function sortContactsForDisplay(
+  contacts: BranchContactRow[],
+): BranchContactRow[] {
   if (contacts.length === 0) {
     return [];
   }
@@ -68,9 +70,15 @@ export async function GET(request: Request) {
     }
 
     const prisma = getPrisma();
-    const resolved = await resolveMunicipalityIdFromParam(prisma, municipalityRaw);
+    const resolved = await resolveMunicipalityIdFromParam(
+      prisma,
+      municipalityRaw,
+    );
     if (!resolved) {
-      return NextResponse.json({ error: "Fant ikke kommune." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Fant ikke kommune." },
+        { status: 404 },
+      );
     }
 
     const muni = await prisma.municipality.findUnique({
@@ -78,7 +86,10 @@ export async function GET(request: Request) {
       select: { id: true, code: true },
     });
     if (!muni) {
-      return NextResponse.json({ error: "Fant ikke kommune." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Fant ikke kommune." },
+        { status: 404 },
+      );
     }
 
     const branches = await prisma.organizationBranch.findMany({

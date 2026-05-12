@@ -5,13 +5,16 @@ import {
   SSB_TABLE_ID_12063,
   importLeisureFromDataset,
   type JsonStat2Dataset,
-} from "../lib/ssb-table-12063";
+} from "@/lib/scripts/ssb-table-12063";
 
 async function run() {
   const yearArg = Number(process.argv[2] ?? "2025");
   const jsonPath = process.argv[3]
     ? path.resolve(process.cwd(), process.argv[3])
-    : path.resolve(process.cwd(), `data/ssb/${SSB_TABLE_ID_12063}-${yearArg}.json`);
+    : path.resolve(
+        process.cwd(),
+        `data/ssb/${SSB_TABLE_ID_12063}-${yearArg}.json`,
+      );
 
   const { prisma, pool } = createScriptPrisma();
 

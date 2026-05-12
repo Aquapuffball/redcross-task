@@ -3,7 +3,7 @@ import {
   API_QUERY_YEAR_MAX,
   API_QUERY_YEAR_MIN,
   resolveMunicipalityIdFromParam,
-} from "@/lib/api-municipality-query";
+} from "@/lib/scripts/api-municipality-query";
 import { getPrisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";

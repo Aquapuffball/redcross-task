@@ -3,7 +3,7 @@ import {
   API_QUERY_YEAR_MAX,
   API_QUERY_YEAR_MIN,
   resolveMunicipalityIdFromParam,
-} from "@/lib/api-municipality-query";
+} from "@/lib/scripts/api-municipality-query";
 import { getPrisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +30,11 @@ export async function GET(request: Request) {
     let year: number | undefined;
     if (hasYear && yearRaw !== null) {
       const y = Number.parseInt(yearRaw, 10);
-      if (!Number.isFinite(y) || y < API_QUERY_YEAR_MIN || y > API_QUERY_YEAR_MAX) {
+      if (
+        !Number.isFinite(y) ||
+        y < API_QUERY_YEAR_MIN ||
+        y > API_QUERY_YEAR_MAX
+      ) {
         return NextResponse.json(
           {
             error: `Ugyldig år. Forventet heltall mellom ${API_QUERY_YEAR_MIN} og ${API_QUERY_YEAR_MAX}.`,
@@ -48,7 +52,10 @@ export async function GET(request: Request) {
       const m = await resolveMunicipalityIdFromParam(prisma, municipalityRaw);
       if (!m) {
         return NextResponse.json(
-          { error: "Fant ikke kommune for oppgitt `municipality` (id eller kommunenummer)." },
+          {
+            error:
+              "Fant ikke kommune for oppgitt `municipality` (id eller kommunenummer).",
+          },
           { status: 404 },
         );
       }

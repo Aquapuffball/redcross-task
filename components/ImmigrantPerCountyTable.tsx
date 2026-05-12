@@ -10,7 +10,13 @@ type Props = {
 
 export function ImmigrantPerCountyTable({ year, immigration }: Props) {
   return (
-    <section className="my-4" aria-label="Innvandringsstatistikk">
+    <section
+      className="flex flex-col gap-3 my-4"
+      aria-label="Innvandringsstatistikk"
+    >
+      <Heading level={2} data-size="sm">
+        Innvandring ({year})
+      </Heading>
       {immigration.length === 0 ? (
         <Alert data-color="neutral" data-size="sm" title="Ingen rader">
           Ingen innvandringsstatistikk for {year} og denne kommunen.
@@ -51,8 +57,8 @@ export function ImmigrantPerCountyTable({ year, immigration }: Props) {
           const fmt = (v: string | null) => (v !== null ? v : "—");
 
           return (
-            <div className="overflow-x-auto rounded-lg border border-neutral-200">
-              <Table data-size="sm" className="min-w-[18rem]">
+            <div className="overflow-x-auto min-w-0">
+              <Table data-size="sm" border>
                 <Table.Head>
                   <Table.Row>
                     <Table.HeaderCell scope="col">Kategori</Table.HeaderCell>
@@ -62,23 +68,23 @@ export function ImmigrantPerCountyTable({ year, immigration }: Props) {
                 </Table.Head>
                 <Table.Body>
                   <Table.Row>
-                    <Table.Cell className="font-medium">
+                    <Table.HeaderCell scope="row">
                       Totalt innvandrere
-                    </Table.Cell>
+                    </Table.HeaderCell>
                     <Table.Cell>{fmt(totalInnvandrere)}</Table.Cell>
                     <Table.Cell>Personer, alle grunner</Table.Cell>
                   </Table.Row>
                   <Table.Row>
-                    <Table.Cell className="font-medium">
+                    <Table.HeaderCell scope="row">
                       Flyktning og familie
-                    </Table.Cell>
+                    </Table.HeaderCell>
                     <Table.Cell>{fmt(flyktningFamilie)}</Table.Cell>
                     <Table.Cell>Personer</Table.Cell>
                   </Table.Row>
                   <Table.Row>
-                    <Table.Cell className="font-medium">
+                    <Table.HeaderCell scope="row">
                       Familieinnvandring
-                    </Table.Cell>
+                    </Table.HeaderCell>
                     <Table.Cell>{fmt(familie)}</Table.Cell>
                     <Table.Cell>Personer</Table.Cell>
                   </Table.Row>

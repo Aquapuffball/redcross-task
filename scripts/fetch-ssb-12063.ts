@@ -4,7 +4,7 @@ import path from "node:path";
 import {
   SSB_TABLE_ID_12063,
   fetchSsb12063Dataset,
-} from "../lib/ssb-table-12063";
+} from "@/lib/scripts/ssb-table-12063";
 
 const DEFAULT_YEAR = "2025";
 
@@ -13,7 +13,10 @@ async function run() {
   const outputArg = process.argv[3];
   const outputPath = outputArg
     ? path.resolve(process.cwd(), outputArg)
-    : path.resolve(process.cwd(), `data/ssb/${SSB_TABLE_ID_12063}-${year}.json`);
+    : path.resolve(
+        process.cwd(),
+        `data/ssb/${SSB_TABLE_ID_12063}-${year}.json`,
+      );
 
   console.log(`Fetching SSB table ${SSB_TABLE_ID_12063} for year ${year}...`);
 

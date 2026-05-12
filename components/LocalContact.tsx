@@ -22,7 +22,7 @@ export function LocalContact({ organizationContact: oc }: Props) {
   if (!branch) {
     return (
       <section
-        className="space-y-3"
+        className="my-4"
         aria-label="Lokal Røde Kors-avdeling og kontakt"
       >
         <Alert
@@ -45,6 +45,12 @@ export function LocalContact({ organizationContact: oc }: Props) {
     (c) =>
       formatBranchContactPersonName(c) || c.role?.trim() || c.email?.trim(),
   );
+  const webHref =
+    web && (web.startsWith("http://") || web.startsWith("https://"))
+      ? web
+      : web
+        ? `https://${web}`
+        : null;
 
   return (
     <section className="my-4" aria-label="Lokal Røde Kors-avdeling og kontakt">
@@ -53,15 +59,19 @@ export function LocalContact({ organizationContact: oc }: Props) {
           <Paragraph>
             <strong>{branch.branchName}</strong>
             {branch.branchType ? (
-              <span className="text-neutral-600"> ({branch.branchType})</span>
+              <span className="text-ds-text-subtle">
+                {" "}
+                ({branch.branchType})
+              </span>
             ) : null}
           </Paragraph>
+
           {contacts.length > 0 ? (
-            <div className="mt-4 space-y-4 border-t border-neutral-200 pt-4">
-              <p>
-                {contacts.length === 1 ? "Kontaktperson" : "Kontaktpersoner"}
-              </p>
-              <List.Unordered className="list-disc">
+            <div className="mt-4 flex flex-col gap-4 border-t border-ds-border-default pt-4">
+              <Paragraph data-size="md">
+                {contacts.length === 1 ? "Kontaktperson:" : "Kontaktpersoner:"}
+              </Paragraph>
+              <List.Unordered>
                 {contacts.map((c, i) => {
                   const name = formatBranchContactPersonName(c);
                   const role = c.role?.trim() || null;
@@ -77,54 +87,46 @@ export function LocalContact({ organizationContact: oc }: Props) {
               </List.Unordered>
             </div>
           ) : null}
-          <dl className="mt-4 grid gap-3 sm:grid-cols-1">
+
+          <dl className="mt-4 grid grid-cols-1 gap-3">
             {branchEmail ? (
               <div>
-                <dt>
+                <dt className="text-ds-text-subtle font-semibold">
                   {contacts.length > 0 ? "E-post (avdeling):" : "E-post:"}
                 </dt>
-                <dd>
+                <dd className="mt-1">
                   <Link href={`mailto:${branchEmail}`}>{branchEmail}</Link>
                 </dd>
               </div>
             ) : null}
             {phone ? (
               <div>
-                <dt className="text-neutral-600">Telefon</dt>
-                <dd className="mt-0.5">
-                  <Link
-                    className="text-sky-800 underline tabular-nums"
-                    href={`tel:${phone.replace(/\s/g, "")}`}
-                  >
-                    {phone}
-                  </Link>
+                <dt className="text-ds-text-subtle font-semibold">Telefon:</dt>
+                <dd className="mt-1">
+                  <Link href={`tel:${phone.replace(/\s/g, "")}`}>{phone}</Link>
                 </dd>
               </div>
             ) : null}
-            {web ? (
+            {webHref ? (
               <div>
-                <dt className="text-neutral-600">Nettside</dt>
-                <dd className="mt-0.5">
-                  <a
-                    className="break-all text-sky-800 underline"
-                    href={
-                      web.startsWith("http://") || web.startsWith("https://")
-                        ? web
-                        : `https://${web}`
-                    }
+                <dt className="text-ds-text-subtle">Nettside</dt>
+                <dd className="mt-1 break-all">
+                  <Link
+                    href={webHref}
                     rel="noopener noreferrer"
                     target="_blank"
                   >
                     {web}
-                  </a>
+                  </Link>
                 </dd>
               </div>
             ) : null}
           </dl>
+
           {!branchEmail && !phone && !web && !anyPersonDetail ? (
-            <p className="mt-3 text-sm text-neutral-600">
+            <Paragraph data-size="sm">
               Ingen kontaktinformasjon registrert for denne avdelingen.
-            </p>
+            </Paragraph>
           ) : null}
         </CardBlock>
       </Card>

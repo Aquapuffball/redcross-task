@@ -1,14 +1,12 @@
 "use client";
-import "@digdir/designsystemet-css/index.css";
-import "rk-design-tokens/design-tokens-build/theme.css";
-import { SkipLink } from "@digdir/designsystemet-react";
-import { Footer, Header } from "rk-designsystem";
+import { Footer, Header, SkipLink } from "rk-designsystem";
 
 const FOOTER_SHORTCUTS = [
   { label: "Forside", href: "/" },
   { label: "Kommunesammenligning", href: "/comparison" },
 ];
-export default function RootLayout({
+
+export default function PagesLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

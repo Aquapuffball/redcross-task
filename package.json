@@ -13,7 +13,8 @@
     "import:ssb:12063": "tsx scripts/import-ssb-12063.ts",
     "import:immigration": "tsx scripts/import-immigration-csv.ts",
     "municipalities:normalize": "tsx scripts/normalize-municipalities.ts",
-    "fetch:ssb:12063": "tsx scripts/fetch-ssb-12063.ts"
+    "fetch:ssb:12063": "tsx scripts/fetch-ssb-12063.ts",
+    "data:bootstrap": "for y in 2022 2023 2024 2025; do (npm run fetch:ssb:12063 -- $y && npm run import:ssb:12063 -- $y) || exit 1; done && npm run import:immigration -- ./befolkning_innvandringsgrunn_kommuner.csv && npm run import:organizations"
   },
   "dependencies": {
     "@digdir/designsystemet-css": "^1.14.0",
