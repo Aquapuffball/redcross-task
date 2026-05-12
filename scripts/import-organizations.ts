@@ -163,7 +163,7 @@ async function run() {
             creationDate,
             isTerminated: branch.branchStatus?.isTerminated ?? false,
             terminationDate: toDateOrNull(branch.branchStatus?.terminationDate),
-            parentBranchId: branch.branchParent?.branchId ?? null,
+            parentBranchId: null,
             parentBranchNumber: branch.branchParent?.branchNumber ?? null,
             parentBranchName: branch.branchParent?.branchName ?? null,
             parentBranchType: branch.branchParent?.branchType ?? null,
@@ -196,7 +196,7 @@ async function run() {
             creationDate,
             isTerminated: branch.branchStatus?.isTerminated ?? false,
             terminationDate: toDateOrNull(branch.branchStatus?.terminationDate),
-            parentBranchId: branch.branchParent?.branchId ?? null,
+            parentBranchId: null,
             parentBranchNumber: branch.branchParent?.branchNumber ?? null,
             parentBranchName: branch.branchParent?.branchName ?? null,
             parentBranchType: branch.branchParent?.branchType ?? null,
@@ -256,6 +256,24 @@ async function run() {
         importedBranches += 1;
         importedContacts += contacts.length;
         importedActivities += activities.length;
+      });
+    }
+
+    // `parentBranchId` → `branchId` FK: children may appear before parents in JSON.
+    for (const branch of branches) {
+      if (!branch.branchId) continue;
+      const parentId = branch.branchParent?.branchId;
+      if (!parentId) continue;
+
+      const parent = await prisma.organizationBranch.findUnique({
+        where: { branchId: parentId },
+        select: { branchId: true },
+      });
+      if (!parent) continue;
+
+      await prisma.organizationBranch.update({
+        where: { branchId: branch.branchId },
+        data: { parentBranchId: parentId },
       });
     }
 

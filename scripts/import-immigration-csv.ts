@@ -6,6 +6,7 @@ import {
   Prisma,
   ValueUnit,
 } from "../app/generated/prisma/client";
+import { normalizeKommuneCode } from "../lib/municipality-code";
 import { createScriptPrisma } from "./create-script-prisma";
 
 const FILE_DEFAULT = "befolkning_innvandringsgrunn_kommuner.csv";
@@ -40,14 +41,6 @@ type ParsedRow = {
   unitRaw: string;
   amount: string;
 };
-
-function normalizeKommuneCode(raw: string): string {
-  const trimmed = raw.trim();
-  if (!trimmed || !/^\d+$/.test(trimmed)) {
-    throw new Error(`Invalid kommune code: "${raw}"`);
-  }
-  return trimmed.padStart(4, "0");
-}
 
 function parseCsv(content: string): ParsedRow[] {
   const rows: ParsedRow[] = [];

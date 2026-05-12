@@ -11,9 +11,12 @@
     "import:organizations": "tsx scripts/import-organizations.ts",
     "import:ssb:12063": "tsx scripts/import-ssb-12063.ts",
     "import:immigration": "tsx scripts/import-immigration-csv.ts",
+    "municipalities:normalize": "tsx scripts/normalize-municipalities.ts",
     "fetch:ssb:12063": "tsx scripts/fetch-ssb-12063.ts"
   },
   "dependencies": {
+    "@digdir/designsystemet-css": "^1.14.0",
+    "@digdir/designsystemet-react": "^1.14.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "next": "16.2.6",

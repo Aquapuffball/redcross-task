@@ -39,13 +39,13 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 By combining data about activity centers in counties, together with immigration data per year per county, and the available activites Red Cross has per county, this project will present the data giving key information about where it has good capacity to handle immigration or it needs more activities/ spots for planned immigration. Focusing on refugees and family immigrants, as presumeably work and study immigrants might have less needs for humiterrian help.
 
-## Flow: 
+## Flow:
 
-Create backend to get data from immigration api by county (csv download for now), SSB activity centers by county, json file provided from red cross organistations. Create database model based on these, and new tables to connect them for the case of my task. 
+Create backend to get data from immigration api by county (csv download for now), SSB activity centers by county, json file provided from red cross organistations. Create database model based on these, and new tables to connect them for the case of my task.
 
-Create nextjs api to connect to the database and routes for different outputs. 
+Create nextjs api to connect to the database and routes for different outputs.
 
-Create frontend, and connect the data in here. 
+Create frontend, and connect the data in here.
 
 ## Import organizations JSON into Prisma
 
@@ -106,8 +106,19 @@ npm run import:immigration -- ./befolkning_innvandringsgrunn_kommuner.csv
 
 Anbefalt rekkefølge: først `import:ssb:12063`, deretter `import:immigration`, deretter `import:organizations` (slik avdelinger får koblet `county`/navn fra SSB ved treff på kommunenavn).
 
-## How have i used AI for this task? 
-- I provided the raw structure of what is (immigration data, organizations data from Red Cross and activity centers), and had it suggest a prisma model stucture of each one of these. These kind of tasks where its to look at data, and extract into something known is something AI is very strong in and saves alot of time. 
+## How have i used AI for this task?
 
-## What i would have done if i had more time. 
-- Connect immigration data directly to the API, here i needed a user to get the spesific data endpoint i wanted, and had problems creating a user. As a tempfix here i downloaded the available data manually, and imported through this file. 
+- I provided the raw structure of what is (immigration data, organizations data from Red Cross and activity centers), and had it suggest a prisma model stucture of each one of these. These kind of tasks where its to look at data, and extract into something known is something AI is very strong in and saves alot of time.
+
+## What i would have done if i had more time.
+
+- Connect immigration data directly to the API, here i needed a user to get the spesific data endpoint i wanted, and had problems creating a user. As a tempfix here i downloaded the available data manually, and imported through this file.
+
+## What is missing:
+
+- Fix presentation, and maybe add some feature to show how well a municipality is prepared for immigrating new people
+- Fix responsive design
+- Clean up code
+- Deploy to vercel
+- Test on other computer
+- Fix readme
