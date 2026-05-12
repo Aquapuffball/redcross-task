@@ -12,6 +12,7 @@ import {
   Select,
   Spinner,
 } from "rk-designsystem";
+// AI fix på missing internal type i rk-designsystem. (bruker @digdir/designsystemet-react Label direkte)
 import { Label } from "@digdir/designsystemet-react";
 import {
   ComparisonDetailError,
@@ -173,7 +174,10 @@ export default function Home() {
   const mainBody = (() => {
     if (state.status === "loading") {
       return (
-        <div className="flex items-center justify-center gap-3 py-12">
+        <div
+          role="status"
+          className="flex items-center justify-center gap-3 py-12"
+        >
           <Spinner data-size="md" aria-hidden />
           <Paragraph data-size="sm">Henter kommuner …</Paragraph>
         </div>
@@ -210,7 +214,6 @@ export default function Home() {
                   <Select
                     id="municipality-select"
                     name="municipalityId"
-                    aria-label="Velg kommune"
                     data-size="md"
                     value={selectedMunicipalityId}
                     onChange={(e: ChangeEvent<HTMLSelectElement>) =>
@@ -232,7 +235,6 @@ export default function Home() {
                   <Select
                     id="year-select"
                     name="year"
-                    aria-label="Velg år"
                     data-size="md"
                     value={String(selectedYear)}
                     onChange={(e: ChangeEvent<HTMLSelectElement>) =>
@@ -307,11 +309,12 @@ export default function Home() {
       className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 p-6"
     >
       <Heading level={1} data-size="md">
-        Kommunesammenligning
+        Immigrering og aktivitetsenter sammenligning
       </Heading>
       <Paragraph data-size="md">
         Velg kommune og år ({COMPARISON_YEAR_RANGE_LABEL}) for å se
-        innvandringsstatistikk og fritidsklubb-data (SSB 12063).
+        innvandringsstatistikk, aktivitetsenter, og Røde Kors-aktiviteter i
+        kommunen.
       </Paragraph>
 
       {mainBody}

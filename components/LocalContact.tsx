@@ -1,4 +1,12 @@
-import { Alert, Card, CardBlock, Link, List, Paragraph } from "rk-designsystem";
+import {
+  Alert,
+  Card,
+  CardBlock,
+  Heading,
+  Link,
+  List,
+  Paragraph,
+} from "rk-designsystem";
 import type {
   BranchContactPersonApi,
   OrganizationContactApiResponse,
@@ -22,9 +30,12 @@ export function LocalContact({ organizationContact: oc }: Props) {
   if (!branch) {
     return (
       <section
-        className="my-4"
+        className="flex flex-col gap-3 my-4"
         aria-label="Lokal Røde Kors-avdeling og kontakt"
       >
+        <Heading level={2} data-size="sm">
+          Lokal Røde Kors-avdeling
+        </Heading>
         <Alert
           data-color="neutral"
           data-size="sm"
@@ -53,21 +64,23 @@ export function LocalContact({ organizationContact: oc }: Props) {
         : null;
 
   return (
-    <section className="my-4" aria-label="Lokal Røde Kors-avdeling og kontakt">
+    <section
+      className="flex flex-col gap-3 my-4"
+      aria-label="Lokal Røde Kors-avdeling og kontakt"
+    >
+      <Heading level={2} data-size="sm">
+        {branch.branchName}
+        {branch.branchType ? (
+          <span className="text-ds-text-subtle font-normal">
+            {" "}
+            ({branch.branchType})
+          </span>
+        ) : null}
+      </Heading>
       <Card data-color="neutral">
         <CardBlock>
-          <Paragraph>
-            <strong>{branch.branchName}</strong>
-            {branch.branchType ? (
-              <span className="text-ds-text-subtle">
-                {" "}
-                ({branch.branchType})
-              </span>
-            ) : null}
-          </Paragraph>
-
           {contacts.length > 0 ? (
-            <div className="mt-4 flex flex-col gap-4 border-t border-ds-border-default pt-4">
+            <div className="flex flex-col gap-4">
               <Paragraph data-size="md">
                 {contacts.length === 1 ? "Kontaktperson:" : "Kontaktpersoner:"}
               </Paragraph>
@@ -88,7 +101,9 @@ export function LocalContact({ organizationContact: oc }: Props) {
             </div>
           ) : null}
 
-          <dl className="mt-4 grid grid-cols-1 gap-3">
+          <dl
+            className={`grid grid-cols-1 gap-3 ${contacts.length > 0 ? "mt-4 border-t border-ds-border-default pt-4" : ""}`}
+          >
             {branchEmail ? (
               <div>
                 <dt className="text-ds-text-subtle font-semibold">
@@ -117,6 +132,7 @@ export function LocalContact({ organizationContact: oc }: Props) {
                     target="_blank"
                   >
                     {web}
+                    <span className="sr-only"> (åpner i ny fane)</span>
                   </Link>
                 </dd>
               </div>

@@ -10,7 +10,7 @@ Frontenden viser et sammendrag per kommune (`/`) der man velger kommune + år og
 
 Tech stack: **Next.js 16** (App Router, Turbopack) · **React 19** · **Prisma 7** (Postgres) · **rk-designsystem** + **Tailwind v4** (bundet til DS-tokens).
 
----
+## Prosjeket er live på vercel: https://redcross-task-git-main-tormod-s-projects.vercel.app/
 
 ## Førstegangsoppsett
 
@@ -194,14 +194,12 @@ curl -s "http://localhost:3000/api/organisasjon/lokal-kontakt?municipality=0301"
 
 Åpne i nettleser: <http://localhost:3000/api/organisasjon/lokal-kontakt?municipality=0301>
 
-
 ---
 
 ## Datakilder og kobling til database
 
-| Sannhetskilde | Hvordan lastes | Importeres til | Brukes av endepunkt |
-|---|---|---|---|
-| CSV: `befolkning_innvandringsgrunn_kommuner.csv` (manuelt nedlastet — SSB-APIet krever pålogging) | `npm run import:immigration` | `MunicipalityImmigrationStat` | `/api/immigrering` |
-| JSON: `api-getOrganizations-output-21apr26.json` (snapshot fra Røde Kors org-API) | `npm run import:organizations` | `OrganizationBranch`, `BranchContact`, `BranchActivity` | `/api/organisasjon/aktiviteter`, `/api/organisasjon/lokal-kontakt`, `/api/tjenester/[id]` |
-| SSB Tabell 12063 (hentes automatisk via PxWeb) | `npm run fetch:ssb:12063` + `npm run import:ssb:12063` | `Municipality`, `MunicipalityLeisureCenterStat` | `/api/fritidssentere`, `/api/kommuner` |
-
+| Sannhetskilde                                                                                     | Hvordan lastes                                         | Importeres til                                          | Brukes av endepunkt                                                                       |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| CSV: `befolkning_innvandringsgrunn_kommuner.csv` (manuelt nedlastet — SSB-APIet krever pålogging) | `npm run import:immigration`                           | `MunicipalityImmigrationStat`                           | `/api/immigrering`                                                                        |
+| JSON: `api-getOrganizations-output-21apr26.json` (snapshot fra Røde Kors org-API)                 | `npm run import:organizations`                         | `OrganizationBranch`, `BranchContact`, `BranchActivity` | `/api/organisasjon/aktiviteter`, `/api/organisasjon/lokal-kontakt`, `/api/tjenester/[id]` |
+| SSB Tabell 12063 (hentes automatisk via PxWeb)                                                    | `npm run fetch:ssb:12063` + `npm run import:ssb:12063` | `Municipality`, `MunicipalityLeisureCenterStat`         | `/api/fritidssentere`, `/api/kommuner`                                                    |
