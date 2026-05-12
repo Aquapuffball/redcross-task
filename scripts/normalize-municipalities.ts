@@ -5,7 +5,7 @@ import {
   canonicalKommuneCodeFromStored,
   isCanonicalKommuneCode,
   lacksKommuneNavn,
-} from "../lib/municipality-code";
+} from "@/lib/scripts/municipality-code";
 
 type Muni = {
   id: string;
@@ -103,7 +103,9 @@ async function main() {
       byCanonical.set(c, list);
     }
 
-    const duplicateGroups = [...byCanonical.entries()].filter(([, rows]) => rows.length > 1);
+    const duplicateGroups = [...byCanonical.entries()].filter(
+      ([, rows]) => rows.length > 1,
+    );
     const nonCanonicalCode = all.filter((m) => {
       const c = canonicalKommuneCodeFromStored(m.code);
       return c !== null && m.code !== c;
@@ -113,15 +115,21 @@ async function main() {
 
     console.log("— Kommune / kommunenummer —");
     console.log(`Totalt antall rader: ${all.length}`);
-    console.log(`Ugyldig kommunenummer (ingen gyldig siffersekvens 1–4): ${invalid.length}`);
+    console.log(
+      `Ugyldig kommunenummer (ingen gyldig siffersekvens 1–4): ${invalid.length}`,
+    );
     if (invalid.length > 0) {
       console.log(
         "  Eksempler:",
-        invalid.slice(0, 8).map((m) => ({ id: m.id, code: m.code, name: m.name })),
+        invalid
+          .slice(0, 8)
+          .map((m) => ({ id: m.id, code: m.code, name: m.name })),
       );
     }
     console.log(`Unike kanoniske kommunenummer (grupper): ${byCanonical.size}`);
-    console.log(`Duplikat-grupper (samme kanoniske nummer, flere rader): ${duplicateGroups.length}`);
+    console.log(
+      `Duplikat-grupper (samme kanoniske nummer, flere rader): ${duplicateGroups.length}`,
+    );
     for (const [canon, rows] of duplicateGroups.slice(0, 15)) {
       console.log(
         `  ${canon}:`,
@@ -131,12 +139,18 @@ async function main() {
     if (duplicateGroups.length > 15) {
       console.log(`  … og ${duplicateGroups.length - 15} grupper til`);
     }
-    console.log(`Rader der \`code\` ikke er kanonisk (f.eks. mangler ledende 0): ${nonCanonicalCode.length}`);
-    console.log(`Rader der \`code\` ikke er eksakt /^[0-9]{4}$/: ${wrongFormat.length}`);
+    console.log(
+      `Rader der \`code\` ikke er kanonisk (f.eks. mangler ledende 0): ${nonCanonicalCode.length}`,
+    );
+    console.log(
+      `Rader der \`code\` ikke er eksakt /^[0-9]{4}$/: ${wrongFormat.length}`,
+    );
     console.log(`Rader uten brukbart kommunenavn: ${missingName.length}`);
 
     if (!apply) {
-      console.log("\nKjør med --apply for å slå sammen duplikater og sette \`code\` til kanonisk fire siffer.");
+      console.log(
+        "\nKjør med --apply for å slå sammen duplikater og sette \`code\` til kanonisk fire siffer.",
+      );
       return;
     }
 
@@ -156,15 +170,21 @@ async function main() {
         }
       }
 
-      const afterDedup = await tx.municipality.findMany({ select: { id: true, code: true } });
+      const afterDedup = await tx.municipality.findMany({
+        select: { id: true, code: true },
+      });
       for (const m of afterDedup) {
         const canon = canonicalKommuneCodeFromStored(m.code);
         if (!canon || m.code === canon) {
           continue;
         }
-        const taken = await tx.municipality.findUnique({ where: { code: canon } });
+        const taken = await tx.municipality.findUnique({
+          where: { code: canon },
+        });
         if (taken && taken.id !== m.id) {
-          console.warn(`Hopper over code-oppdatering for ${m.id}: "${m.code}" -> ${canon} (kode er opptatt)`);
+          console.warn(
+            `Hopper over code-oppdatering for ${m.id}: "${m.code}" -> ${canon} (kode er opptatt)`,
+          );
           continue;
         }
         await tx.municipality.update({
@@ -174,7 +194,9 @@ async function main() {
       }
     });
 
-    const after = await prisma.municipality.findMany({ orderBy: { code: "asc" } });
+    const after = await prisma.municipality.findMany({
+      orderBy: { code: "asc" },
+    });
     const missingAfter = after.filter((m) => lacksKommuneNavn(m.name, m.code));
     console.log("\nEtter --apply:");
     console.log(`  Antall kommuner: ${after.length}`);
