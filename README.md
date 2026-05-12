@@ -194,15 +194,6 @@ curl -s "http://localhost:3000/api/organisasjon/lokal-kontakt?municipality=0301"
 
 Åpne i nettleser: <http://localhost:3000/api/organisasjon/lokal-kontakt?municipality=0301>
 
-### 6. `GET /api/tjenester/[id]` — avdelinger oppslag på postnummer (ikke i bruk i UI)
-
-Slår opp `OrganizationBranch` på et 4-sifret norsk postnummer. Foreløpig ikke konsumert av frontenden — dokumentert for fullstendighet.
-
-```bash
-curl -s "http://localhost:3000/api/tjenester/0186"
-```
-
-Åpne i nettleser: <http://localhost:3000/api/tjenester/0186>
 
 ---
 
@@ -214,19 +205,3 @@ curl -s "http://localhost:3000/api/tjenester/0186"
 | JSON: `api-getOrganizations-output-21apr26.json` (snapshot fra Røde Kors org-API) | `npm run import:organizations` | `OrganizationBranch`, `BranchContact`, `BranchActivity` | `/api/organisasjon/aktiviteter`, `/api/organisasjon/lokal-kontakt`, `/api/tjenester/[id]` |
 | SSB Tabell 12063 (hentes automatisk via PxWeb) | `npm run fetch:ssb:12063` + `npm run import:ssb:12063` | `Municipality`, `MunicipalityLeisureCenterStat` | `/api/fritidssentere`, `/api/kommuner` |
 
----
-
-## Hva er gjort med AI
-
-- Struktur for Prisma-modellene ble foreslått av en AI-assistent basert på rå datastruktur fra hver av de tre kildene; deretter justert manuelt.
-- Designsystem-/komponentintegrasjon mot `rk-designsystem` og Tailwind v4 token-mapping (`@theme { --spacing: var(--ds-size-unit); … }` i `app/globals.css`).
-
-## Hva som ville vært gjort med mer tid
-
-- Direkte API-integrasjon mot SSBs innvandringstabell istedenfor manuell CSV (krever brukerkonto).
-- Liten ytelsesoptimalisering: én server-handler som returnerer både `year` og `year-1` for innvandring slik at frontenden slipper to runde-turer.
-- Fjerne eller knytte `/api/tjenester/[id]` til UI (postnummer-oppslag for "finn din lokale Røde Kors-avdeling").
-
-## Deploy
-
-App Router-prosjektet er klart for Vercel — sett `DATABASE_URL` som miljøvariabel i Vercel-prosjektet. `postinstall` kjører `prisma generate` på byggeserveren.
